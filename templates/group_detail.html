@@ -1,0 +1,45 @@
+{% extends "base.html" %}{% load money %}
+{% block title %}{{ group.name }} · SplitEase{% endblock %}
+{% block content %}
+<a href="{% url 'group_list' %}" class="muted">All groups</a>
+<h1>{{ group.name }}</h1>
+<div class="ticket {% if me < 0 %}owe{% elif me == 0 %}even{% endif %}">
+  <div class="cap">{% if me > 0 %}You're owed{% elif me < 0 %}You owe{% else %}You're all square{% endif %}</div>
+  <div class="big">{{ me|peso }}</div>
+</div>
+<a class="btn" href="{% url 'add_expense' group.pk %}">Add expense</a>
+
+<h2>People</h2>
+<div class="card">{% for m, amt in balances %}
+  <div class="row"><span class="who"><span class="av {% cycle '' 'o' 'k' %} {% if m|is_guest %}g{% endif %}">{{ m|initial }}</span>
+    <span>{{ m|display }}{% if m|is_guest %}<span class="tag">guest</span>{% endif %}</span></span>
+  <span class="{% if amt > 0 %}pos{% elif amt < 0 %}neg{% else %}muted{% endif %}">{% if amt > 0 %}is owed {{ amt|peso }}{% elif amt < 0 %}owes {{ amt|peso }}{% else %}settled{% endif %}</span></div>
+{% endfor %}</div>
+<form method="post" action="{% url 'add_guest' group.pk %}" class="inline" style="margin-top:1.2rem">{% csrf_token %}
+  <input name="name" maxlength="40" placeholder="Add someone without an account, e.g. Migs" aria-label="Guest name">
+  <button class="btn dark">Add person</button></form>
+<p class="muted">Guests can be split with and paid back. Any member can record their payments.</p>
+
+<h2>Settle up</h2>
+<div class="card">{% for payer, payee, amt in suggestions %}
+  <div class="row"><span><strong>{{ payer|display }}</strong> pays <strong>{{ payee|display }}</strong> <span class="neg">{{ amt|peso }}</span></span>
+  {% if user == payer or user == payee or payer|is_guest or payee|is_guest %}
+  <form method="post" action="{% url 'settle' group.pk %}">{% csrf_token %}
+    <input type="hidden" name="payer" value="{{ payer.pk }}"><input type="hidden" name="payee" value="{{ payee.pk }}">
+    <input type="hidden" name="cents" value="{{ amt }}"><button class="btn small">Record payment</button></form>{% endif %}</div>
+{% empty %}<p class="muted">Nobody owes anybody. Nice.</p>{% endfor %}</div>
+
+<h2>Receipts</h2>
+<div class="card">{% for e in expenses %}
+  <div class="row"><div><strong style="font-size:1.1rem">{{ e.description }}</strong><div class="muted">{{ e.paid_by|display }} paid · {{ e.get_split_type_display|lower }} · {{ e.date|date:"M j" }}</div></div>
+  <div style="text-align:right"><strong style="font-size:1.2rem">{{ e.amount_cents|peso }}</strong>
+  {% if user == e.paid_by or user == group.owner or e.paid_by|is_guest %}
+  <form method="post" action="{% url 'delete_expense' group.pk e.pk %}" onsubmit="return confirm('Delete this expense?')">{% csrf_token %}<button class="btn small ghost">Delete</button></form>{% endif %}</div></div>
+{% empty %}<p class="muted">Nothing yet. Add the first expense.</p>{% endfor %}</div>
+
+{% if settlements %}<h2>Payments made</h2>
+<div class="card">{% for s in settlements %}<div class="row"><span>{{ s.payer|display }} paid {{ s.payee|display }}</span><strong>{{ s.amount_cents|peso }}</strong></div>{% endfor %}</div>{% endif %}
+
+<h2>Invite with a link</h2>
+<p class="muted">People with an account join the group when they open it:</p><code>{{ invite_url }}</code>
+{% endblock %}

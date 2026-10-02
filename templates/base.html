@@ -1,0 +1,16 @@
+{% load static %}<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}SplitEase{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'style.css' %}"></head>
+<body>
+<header class="top"><div>
+  <a class="brand" href="{% url 'group_list' %}"><i></i>SplitEase</a>
+  {% if user.is_authenticated %}
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}{{ user.username }} &nbsp; <button>Log out</button></form>
+  {% endif %}
+</div></header>
+<main>
+{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+{% block content %}{% endblock %}
+</main></body></html>

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Who owes who?</h1>
+<div class="card">
+{% for g in groups %}
+  <div class="row"><a href="{% url 'group_detail' g.pk %}" style="font-size:1.3rem;font-weight:800;color:var(--ink)">{{ g.name }}</a>
+  <span class="muted">{{ g.members.count }} {{ g.members.count|pluralize:"person,people" }}</span></div>
+{% empty %}<p class="muted">No groups yet. Start one below, then add your people.</p>{% endfor %}
+</div>
+<h2>Start a group</h2>
+<form method="post" class="inline">{% csrf_token %}{{ form.name }}<button class="btn">Create group</button></form>
+{{ form.name.errors }}
+{% endblock %}

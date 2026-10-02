@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% load money %}
+{% block content %}
+<a href="{% url 'group_detail' group.pk %}" class="muted">{{ group.name }}</a>
+<h1>Add expense</h1>
+<form method="post" class="card pad">{% csrf_token %}
+{{ form.non_field_errors }}
+<label>What was it for?</label>{{ form.description }}{{ form.description.errors }}
+<label>Amount (₱)</label>{{ form.amount }}{{ form.amount.errors }}
+<label>Paid by</label>{{ form.paid_by }}
+<label>Date</label>{{ form.date }}
+<label>Split</label>{{ form.split_type }}
+<label>Who's in? <span class="muted" id="unit"></span></label>
+{% for m, inc, val in form.member_rows %}
+<div class="pick">{{ inc }}<span class="who"><span class="av {% cycle '' 'o' 'k' %}{% if m|is_guest %} g{% endif %}">{{ m|initial }}</span>{{ m|display }}</span><span class="val">{{ val }}</span></div>
+{% endfor %}
+<p><button class="btn">Save expense</button></p>
+</form>
+<script>
+const type = document.getElementById('id_split_type'), unit = document.getElementById('unit');
+const hints = {equal: '', exact: "enter each person's amount in ₱", percent: "enter each person's % (total 100)", shares: "enter each person's shares, e.g. 2 for double"};
+function sync() {
+  unit.textContent = hints[type.value] ? '– ' + hints[type.value] : '';
+  document.querySelectorAll('.val').forEach(el => el.style.visibility = type.value === 'equal' ? 'hidden' : 'visible');
+}
+type.addEventListener('change', sync); sync();
+</script>
+{% endblock %}
